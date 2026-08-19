@@ -77,6 +77,38 @@ jobs:
           path: target/wheels/can_motor_control-*.whl
           if-no-files-found: error
 
+  linux_arm64:
+    name: Linux arm64 Rust and Python
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert native arm64 runner
+        run: test "$(uname -m)" = aarch64
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - uses: Swatinem/rust-cache@v2
+      - name: Build Linux arm64 wheel
+        working-directory: crates/can-motor-control-py
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin numpy pytest
+          maturin build --release --strip --compatibility pypi
+      - name: Validate and install Linux arm64 wheel
+        run: |
+          wheel=$(find target/wheels -name 'can_motor_control-*.whl' -print -quit)
+          case "$wheel" in *aarch64.whl) ;; *) echo "unexpected wheel tag: $wheel"; exit 1;; esac
+          python -m venv /tmp/can-motor-control-linux-arm64
+          /tmp/can-motor-control-linux-arm64/bin/pip install numpy pytest "$wheel"
+          /tmp/can-motor-control-linux-arm64/bin/python -m pytest tests/python -v
+          /tmp/can-motor-control-linux-arm64/bin/python -c "import can_motor_control as c; assert hasattr(c, 'SocketCanBus'); assert not hasattr(c, 'GsUsbBus')"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: can_motor_control-wheel-linux-arm64
+          path: target/wheels/can_motor_control-*.whl
+          if-no-files-found: error
+
   no_std:
     name: can-motor-codec / can-motor-damiao-codec no_std build
     runs-on: ubuntu-latest
