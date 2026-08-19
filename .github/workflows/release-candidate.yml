@@ -77,10 +77,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - platform: linux
+          - platform: linux-x64
             os: ubuntu-latest
+            wheel_arch: x86_64
+          - platform: linux-arm64
+            os: ubuntu-24.04-arm
+            wheel_arch: aarch64
           - platform: macos-arm64
             os: macos-14
+            wheel_arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -92,6 +97,9 @@ jobs:
       - name: Assert macOS arm64 runner
         if: matrix.platform == 'macos-arm64'
         run: test "$(uname -m)" = arm64
+      - name: Assert Linux arm64 runner
+        if: matrix.platform == 'linux-arm64'
+        run: test "$(uname -m)" = aarch64
       - name: Install Python build tools
         run: |
           python -m pip install --upgrade pip
@@ -102,15 +110,20 @@ jobs:
           rm -rf ../../target/wheels
           maturin build --release --strip --compatibility pypi
       - name: Build sdist on Linux
-        if: matrix.platform == 'linux'
+        if: matrix.platform == 'linux-x64'
         working-directory: crates/can-motor-control-py
         run: maturin sdist
       - name: Install wheel into a clean venv
         run: |
+          wheel=$(find target/wheels -name 'can_motor_control-*.whl' -print -quit)
+          case "$wheel" in
+            *"${{ matrix.wheel_arch }}.whl") ;;
+            *) echo "unexpected wheel architecture: $wheel"; exit 1 ;;
+          esac
           python -m venv /tmp/venv
           /tmp/venv/bin/python -m pip install --upgrade pip
           /tmp/venv/bin/pip install numpy pytest
-          /tmp/venv/bin/pip install target/wheels/can_motor_control-*.whl
+          /tmp/venv/bin/pip install "$wheel"
           /tmp/venv/bin/python -m pytest tests/python -v
           /tmp/venv/bin/python -c "import can_motor_control as c, sys; native = 'GsUsbBus' if sys.platform == 'darwin' else 'SocketCanBus'; absent = 'SocketCanBus' if sys.platform == 'darwin' else 'GsUsbBus'; assert hasattr(c, native); assert not hasattr(c, absent)"
       - name: Upload Python distributions
