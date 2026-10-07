@@ -33,3 +33,5 @@ The release native codec benchmark over 100,000 iterations measured seven motor 
 The release wheel benchmark over 10,000 iterations with OPENBLAS_NUM_THREADS=1 measured seven motor command submission and MockCanBus tick p50 1,030 ns, p99 3,590 ns and maximum 73,799 ns. Elapsed time was 0.01403 seconds, process CPU time 0.01403 seconds and peak resident memory 35,388 KiB. MockCanBus retains sent frames, so the memory measurement includes accumulated test traffic. This is not a CAN wire latency or a hard real time guarantee. The reproducible script is `scripts/benchmark_robstride_mock.py`.
 
 Native Jetson validation is pending because Tailscale requires an operator authentication check. Physical motor operation was not attempted. Raspberry Pi qualification remains pending.
+
+The codec also builds successfully without default features for thumbv7em-none-eabihf, an embedded target without an operating system. This is a compilation check and does not satisfy physical ARM qualification.
