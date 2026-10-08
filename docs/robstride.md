@@ -35,3 +35,7 @@ The release wheel benchmark over 10,000 iterations with OPENBLAS_NUM_THREADS=1 m
 Native Jetson validation is pending because Tailscale requires an operator authentication check. Physical motor operation was not attempted. Raspberry Pi qualification remains pending.
 
 The codec also builds successfully without default features for thumbv7em-none-eabihf, an embedded target without an operating system. This is a compilation check and does not satisfy physical ARM qualification.
+
+## Native Jetson validation on October 8, 2026
+
+The locked Rust workspace tests passed on the physical development Jetson Orin, including ten protocol tests and mixed model routing. The release native Python extension built on aarch64 and all 28 Python tests passed there in 6.39 seconds. A seven motor MockCanBus loop over 10,000 iterations with one BLAS thread measured p50 2,593 ns, p99 5,440 ns and maximum 273,131 ns, with elapsed time 0.03284 seconds, process CPU time 0.03272 seconds and peak resident memory 34,964 KiB. No physical CAN access occurred. Physical motor behavior and Pi qualification remain pending.
